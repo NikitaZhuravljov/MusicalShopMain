@@ -23,8 +23,8 @@ public class App {
                     "1. Add a product\n" +
                     "2. Add a buyer\n" +
                     "3. List of buyers\n" +
-                    "4. entity.Product list\n" +
-                    "5. entity.Purchase the product by the user\n" +
+                    "4. Product list\n" +
+                    "5. Purchase the product by the user\n" +
                     "6. List of purchased products for the selected user\n" +
                     "7. Add money to the user\n" +
                     "8. Display the cost of all items sold at all times");
@@ -81,7 +81,7 @@ public class App {
         Product product = new Product(type, name, price, stock);
         productList.add(product);
 
-        System.out.println("entity.Product added successfully!");
+        System.out.println("Product added successfully!");
     }
 
     private void addBuyer() {
@@ -99,7 +99,7 @@ public class App {
         Buyer buyer = new Buyer(name, email, address);
         buyerList.add(buyer);
 
-        System.out.println("entity.Buyer added successfully!");
+        System.out.println("Buyer added successfully!");
     }
 
     private void listBuyers() {
@@ -135,7 +135,7 @@ public class App {
             product.setStock(product.getStock() - 1); // Decrease stock by 1
             Purchase purchase = new Purchase(buyer, product);
             purchaseList.add(purchase);
-            System.out.println("entity.Purchase successful! Updated stock: " + product.getStock());
+            System.out.println("Purchase successful! Updated stock: " + product.getStock());
         } else if (product.getStock() == 0) {
             System.out.println("Sorry, this product is out of stock.");
         } else {
