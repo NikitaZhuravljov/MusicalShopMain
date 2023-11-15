@@ -1,7 +1,5 @@
 package main;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 import entity.Buyer;
 import entity.Product;
@@ -27,9 +25,11 @@ public class App {
                     "5. Purchase the product by the user\n" +
                     "6. List of purchased products for the selected user\n" +
                     "7. Add money to the user\n" +
-                    "8. Display the cost of all items sold at all times");
+                    "8. Display the cost of sold items\n" +
+                    "9. Display top buyers\n" +
+                    "10. Display top sold items");
             System.out.println("Task number: ");
-            int task = Input.inputNumberFromRange(0, 8);
+            int task = Input.inputNumberFromRange(0, 10);
 
             switch (task) {
                 case 0:
@@ -59,6 +59,14 @@ public class App {
                 case 8:
                     displayTotalSales();
                     break;
+                case 9:
+                    topBuyers();
+                    break;
+                case 10:
+                    topSoldItems();
+                    break;
+                default:
+                    System.out.println("no such option!");
             }
         } while (repeat);
     }
@@ -90,10 +98,10 @@ public class App {
         System.out.println("Enter buyer name: ");
         String name = scanner.nextLine();
 
-        System.out.println("Enter buyer email: ");
+        System.out.println("Enter buyer second name: ");
         String email = scanner.nextLine();
 
-        System.out.println("Enter buyer address: ");
+        System.out.println("Enter buyer phone number: ");
         String address = scanner.nextLine();
 
         Buyer buyer = new Buyer(name, email, address);
@@ -103,27 +111,26 @@ public class App {
     }
 
     private void listBuyers() {
-        System.out.println("List of Buyers:");
+        System.out.println("Buyers list:");
         for (int i = 0; i < buyerList.size(); i++) {
             System.out.println(i + 1 + ". " + buyerList.get(i));
         }
     }
 
     private void listProducts() {
-        System.out.println("List of Products:");
+        System.out.println("Products list:");
         for (int i = 0; i < productList.size(); i++) {
             System.out.println(i + 1 + ". " + productList.get(i));
         }
     }
 
     private void purchaseProduct() {
-        Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Select a buyer (enter buyer index):");
+        System.out.println("Select a buyer (buyer number):");
         listBuyers();
         int buyerIndex = Input.inputNumberFromRange(1, buyerList.size()) - 1;
 
-        System.out.println("Select a product (enter product index):");
+        System.out.println("Select a product (product number):");
         listProducts();
         int productIndex = Input.inputNumberFromRange(1, productList.size()) - 1;
 
@@ -132,27 +139,27 @@ public class App {
 
         if (buyerHasEnoughMoney(buyer, product) && product.getStock() > 0) {
             buyer.deductMoney(product.getPrice());
-            product.setStock(product.getStock() - 1); // Decrease stock by 1
+            product.setStock(product.getStock() - 1);
             Purchase purchase = new Purchase(buyer, product);
             purchaseList.add(purchase);
             System.out.println("Purchase successful! Updated stock: " + product.getStock());
-        } else if (product.getStock() == 0) {
-            System.out.println("Sorry, this product is out of stock.");
-        } else {
-            System.out.println("Not enough money. Please add money to the buyer.");
+        }
+        else if (product.getStock() == 0) {
+            System.out.println("Out of stock!");
+        }
+        else {
+            System.out.println("Not enough money!");
         }
     }
 
     private void listPurchasedProducts() {
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("Select a buyer to list purchased products (enter buyer index):");
+        System.out.println("Select a buyer to list purchased products (buyer number) :");
         listBuyers();
         int buyerIndex = Input.inputNumberFromRange(1, buyerList.size()) - 1;
 
         Buyer buyer = buyerList.get(buyerIndex);
 
-        System.out.println("List of purchased products for " + buyer.getName() + ":");
+        System.out.println("Purchased products for " + buyer.getName() + ":");
         for (Purchase purchase : purchaseList) {
             if (purchase.getBuyer().equals(buyer)) {
                 System.out.println(purchase.getProduct());
@@ -176,7 +183,7 @@ public class App {
     private void addMoneyToBuyer() {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Select a buyer to add money (enter buyer index):");
+        System.out.println("Select a buyer to add money (buyer number):");
         listBuyers();
         int buyerIndex = Input.inputNumberFromRange(1, buyerList.size()) - 1;
 
@@ -186,7 +193,79 @@ public class App {
         double amount = scanner.nextDouble();
 
         buyer.addMoney(amount);
-        System.out.println("Money added successfully to " + buyer.getName() + ". Updated balance: $" + buyer.getMoney());
+        System.out.println("Money added successfully to " + buyer.getName());
     }
+
+    private void topBuyers() {
+        System.out.println("Top Buyers:");
+
+        String[] buyerNames = new String[buyerList.size()];
+        int[] itemsBought = new int[buyerList.size()];
+
+        for (int i = 0; i < buyerList.size(); i++) {
+            buyerNames[i] = buyerList.get(i).getName();
+        }
+
+        for (Purchase purchase : purchaseList) {
+            int buyerIndex = buyerList.indexOf(purchase.getBuyer());
+            itemsBought[buyerIndex]++;
+        }
+
+        for (int i = 0; i < buyerList.size() - 1; i++) {
+            for (int j = i + 1; j < buyerList.size(); j++) {
+                if (itemsBought[j] > itemsBought[i]) {
+                    int tempItems = itemsBought[i];
+                    itemsBought[i] = itemsBought[j];
+                    itemsBought[j] = tempItems;
+
+                    String tempName = buyerNames[i];
+                    buyerNames[i] = buyerNames[j];
+                    buyerNames[j] = tempName;
+                }
+            }
+        }
+
+        int topBuyersCount = Math.min(5, buyerList.size());
+        for (int i = 0; i < topBuyersCount; i++) {
+            System.out.println((i + 1) + ". " + buyerNames[i] + " - Items Bought: " + itemsBought[i]);
+        }
+    }
+    private void topSoldItems() {
+        System.out.println("Top Sold Items:");
+
+        String[] productNames = new String[productList.size()];
+        int[] quantitySold = new int[productList.size()];
+
+        for (int i = 0; i < productList.size(); i++) {
+            productNames[i] = productList.get(i).getName();
+        }
+
+        for (Purchase purchase : purchaseList) {
+            int productIndex = productList.indexOf(purchase.getProduct());
+            quantitySold[productIndex]++;
+        }
+
+        for (int i = 0; i < productList.size() - 1; i++) {
+            for (int j = i + 1; j < productList.size(); j++) {
+                if (quantitySold[j] > quantitySold[i]) {
+                    int tempQuantity = quantitySold[i]; // меняем переменные местами
+                    quantitySold[i] = quantitySold[j];
+                    quantitySold[j] = tempQuantity;
+
+                    String tempName = productNames[i];
+                    productNames[i] = productNames[j];
+                    productNames[j] = tempName;
+                }
+            }
+        }
+
+        int topItemsCount = Math.min(5, productList.size());
+        for (int i = 0; i < topItemsCount; i++) {
+            System.out.println((i + 1) + ". " + productNames[i] + " - Quantity Sold: " + quantitySold[i]);
+        }
+    }
+
+
+
 
 }

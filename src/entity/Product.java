@@ -6,6 +6,7 @@ public class Product {
     private String name;
     private double price;
     private int stock;
+    private int countSold;
 
     public Product(String type, String name, double price, int stock) {
         this.type = type;
@@ -33,6 +34,7 @@ public class Product {
     public void setStock(int stock) {
         this.stock = stock;
     }
+
 
     @Override
     public int hashCode() {

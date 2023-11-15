@@ -3,14 +3,14 @@ import java.util.Objects;
 
 public class Buyer {
     private String name;
-    private String email;
-    private String address;
+    private String secondName;
+    private String phoneNumber;
     private double money;
 
     public Buyer(String name, String email, String address) {
         this.name = name;
-        this.email = email;
-        this.address = address;
+        this.secondName = email;
+        this.phoneNumber = address;
         this.money = 0.0;
     }
 
@@ -22,12 +22,12 @@ public class Buyer {
         return name;
     }
 
-    public String getEmail() {
-        return email;
+    public String getSecondName() {
+        return secondName;
     }
 
-    public String getAddress() {
-        return address;
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
     public double getMoney() {
@@ -48,7 +48,7 @@ public class Buyer {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, email, address, money);
+        return Objects.hash(name, secondName, phoneNumber, money);
     }
 
     @Override
@@ -58,13 +58,13 @@ public class Buyer {
         Buyer buyer = (Buyer) obj;
         return Double.compare(buyer.money, money) == 0 &&
                 Objects.equals(name, buyer.name) &&
-                Objects.equals(email, buyer.email) &&
-                Objects.equals(address, buyer.address);
+                Objects.equals(secondName, buyer.secondName) &&
+                Objects.equals(phoneNumber, buyer.phoneNumber);
     }
 
     @Override
     public String toString() {
-        return String.format("%s; %s; %s; $%.2f", name, email, address, money);
+        return String.format("%s; %s; %s; $%.2f", name, secondName, phoneNumber, money);
     }
 
 
