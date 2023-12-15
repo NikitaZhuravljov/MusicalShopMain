@@ -1,22 +1,33 @@
 package entity;
+import tools.IDGenerator;
+
 import java.util.Objects;
 
 public class Buyer {
+    private int id;
     private String name;
     private String secondName;
     private String phoneNumber;
     private double money;
 
-    public Buyer(String name, String email, String address) {
+    public Buyer(String name, String secondName, String phoneNumber) {
+        this.id = IDGenerator.generateRandomID(); // Assigning the ID and incrementing the latestId for the next buyer
         this.name = name;
-        this.secondName = email;
-        this.phoneNumber = address;
-        this.money = 0.0;
+        this.secondName = secondName;
+        this.phoneNumber = phoneNumber;
+        this.money = 0.0; // Assuming initial money is 0 for a new buyer
     }
 
-    public Buyer(String name, String email, String address, double money) {
+    public Buyer(int id, String name, String email, String address, double money) {
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public void setName(String name) {
         this.name = name;

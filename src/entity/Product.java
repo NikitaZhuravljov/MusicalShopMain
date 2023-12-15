@@ -1,19 +1,30 @@
 package entity;
+import tools.IDGenerator;
+
 import java.util.Objects;
 
 public class Product {
+    private int id;
     private String type;
     private String name;
     private double price;
     private int stock;
 
     public Product(String type, String name, double price, int stock) {
+        this.id = IDGenerator.generateRandomID();
         this.type = type;
         this.name = name;
         this.price = price;
         this.stock = stock;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public int getStock() {
         return stock;
