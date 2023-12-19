@@ -1,6 +1,9 @@
 package main;
 import java.io.*;
 import java.sql.*;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.*;
 
 import entity.Buyer;
@@ -10,12 +13,9 @@ import entity.Purchase;
 import java.util.List;
 
 
-import tools.DiscountCountdownTimer;
 import tools.IDGenerator;
 import tools.Input;
 public class App {
-
-    DiscountCountdownTimer discountCountdownTimer = new DiscountCountdownTimer();
     private List<Product> productList = new ArrayList<>();
     private List<Buyer> buyerList = new ArrayList<>();
     private List<Purchase> purchaseList = new ArrayList<>();
@@ -205,7 +205,8 @@ public class App {
                     clearDatabase();
                     break;
                 case 14:
-                    discountCountdownTimer.startTimer();
+                    timeUntilNextDiscount();
+                    break;
                 default:
                     System.out.println("no such option!");
             }
@@ -216,6 +217,36 @@ public class App {
 
 
     }
+    private void timeUntilNextDiscount() {
+        LocalDateTime discountStartTime = LocalDateTime.of(2023, Month.DECEMBER, 19, 0, 0, 0);
+        LocalDateTime discountEndTime = LocalDateTime.of(2023, Month.DECEMBER, 24, 23, 59, 59);
+        LocalDateTime now = LocalDateTime.now();
+
+        String timeLeft;
+
+        if (now.isBefore(discountStartTime)) {
+            Duration duration = Duration.between(now, discountStartTime);
+            timeLeft = formatDuration(duration, "until the discount starts");
+        } else if (now.isAfter(discountEndTime)) {
+            timeLeft = "Discount has ended";
+        } else {
+            Duration duration = Duration.between(now, discountEndTime);
+            timeLeft = formatDuration(duration, "until the discount ends");
+        }
+
+        System.out.println("Time remaining: " + timeLeft);
+    }
+
+    private String formatDuration(Duration duration, String status) {
+        long days = duration.toDays();
+        long hours = duration.toHoursPart();
+        long minutes = duration.toMinutesPart();
+        long seconds = duration.toSecondsPart();
+
+        return String.format("%d days, %d hours, %d minutes, %d seconds %s",
+                days, hours, minutes, seconds, status);
+    }
+
 
     private void addProduct() {
         Scanner scanner = new Scanner(System.in);
@@ -467,23 +498,55 @@ public class App {
 
 
     private void listPurchasedProducts() {
+        Scanner scanner = new Scanner(System.in);
+
         System.out.println("Buyers list:");
         listBuyers();
 
         System.out.println("Enter the buyer ID to list purchased products: ");
-        Scanner scanner = new Scanner(System.in);
         int buyerId = scanner.nextInt();
 
-        // Fetch purchased products for the specified buyer ID
+        System.out.println("Choose time interval:");
+        System.out.println("1. In a day");
+        System.out.println("2. In a week");
+        System.out.println("3. In a month");
+        System.out.println("4. In a year");
+        System.out.println("5. All time");
+        int intervalChoice = scanner.nextInt();
+
+        LocalDateTime startDate;
+        LocalDateTime endDate = LocalDateTime.now();
+
+        switch (intervalChoice) {
+            case 1:
+                startDate = endDate.minusDays(1);
+                break;
+            case 2:
+                startDate = endDate.minusWeeks(1);
+                break;
+            case 3:
+                startDate = endDate.minusMonths(1);
+                break;
+            case 4:
+                startDate = endDate.minusYears(1);
+                break;
+            case 5:
+            default:
+                startDate = LocalDateTime.MIN;
+                break;
+        }
+
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(
                     "SELECT Product.type, Product.name, Product.price, Product.stock FROM Purchase " +
                             "INNER JOIN Product ON Purchase.product_id = Product.id " +
-                            "WHERE Purchase.buyer_id = ?");
+                            "WHERE Purchase.buyer_id = ? AND Purchase.purchase_date BETWEEN ? AND ?");
             preparedStatement.setInt(1, buyerId);
+            preparedStatement.setObject(2, startDate);
+            preparedStatement.setObject(3, endDate);
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            System.out.println("Purchased products for Buyer ID " + buyerId + ":");
+            System.out.println("Purchased products for Buyer ID " + buyerId + " within the selected interval:");
             while (resultSet.next()) {
                 String productType = resultSet.getString("type");
                 String productName = resultSet.getString("name");
@@ -497,16 +560,52 @@ public class App {
         }
     }
 
+
     private void displayTotalSales() {
+        System.out.println("Choose time interval:");
+        System.out.println("1. In a day");
+        System.out.println("2. In a week");
+        System.out.println("3. In a month");
+        System.out.println("4. In a year");
+        System.out.println("5. All time");
+
+        Scanner scanner = new Scanner(System.in);
+        int intervalChoice = scanner.nextInt();
+
+        LocalDateTime startDate;
+        LocalDateTime endDate = LocalDateTime.now();
+
+        switch (intervalChoice) {
+            case 1:
+                startDate = endDate.minusDays(1);
+                break;
+            case 2:
+                startDate = endDate.minusWeeks(1);
+                break;
+            case 3:
+                startDate = endDate.minusMonths(1);
+                break;
+            case 4:
+                startDate = endDate.minusYears(1);
+                break;
+            case 5:
+            default:
+                startDate = LocalDateTime.MIN;
+                break;
+        }
+
         try {
-            Statement statement = connection.createStatement();
-            String totalSalesQuery = "SELECT SUM(Product.price) AS total_sales FROM Purchase " +
-                    "INNER JOIN Product ON Purchase.product_id = Product.id";
-            ResultSet resultSet = statement.executeQuery(totalSalesQuery);
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT SUM(Product.price) AS total_sales FROM Purchase " +
+                            "INNER JOIN Product ON Purchase.product_id = Product.id " +
+                            "WHERE Purchase.purchase_date BETWEEN ? AND ?");
+            preparedStatement.setObject(1, startDate);
+            preparedStatement.setObject(2, endDate);
+            ResultSet resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
                 double totalSales = resultSet.getDouble("total_sales");
-                System.out.println("Total sales amount: $" + totalSales);
+                System.out.println("Total sales amount within the selected interval: $" + totalSales);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -613,37 +712,59 @@ public class App {
         }
     }
     private void topSoldItems() {
-        System.out.println("Top Sold Items:");
+        System.out.println("Choose time interval:");
+        System.out.println("1. In a day");
+        System.out.println("2. In a week");
+        System.out.println("3. In a month");
+        System.out.println("4. In a year");
+        System.out.println("5. All time");
 
-        String[] productNames = new String[productList.size()];
-        int[] quantitySold = new int[productList.size()];
+        Scanner scanner = new Scanner(System.in);
+        int intervalChoice = scanner.nextInt();
 
-        for (int i = 0; i < productList.size(); i++) {
-            productNames[i] = productList.get(i).getName();
+        LocalDateTime startDate;
+        LocalDateTime endDate = LocalDateTime.now();
+
+        switch (intervalChoice) {
+            case 1:
+                startDate = endDate.minusDays(1);
+                break;
+            case 2:
+                startDate = endDate.minusWeeks(1);
+                break;
+            case 3:
+                startDate = endDate.minusMonths(1);
+                break;
+            case 4:
+                startDate = endDate.minusYears(1);
+                break;
+            case 5:
+            default:
+                startDate = LocalDateTime.MIN;
+                break;
         }
 
-        for (Purchase purchase : purchaseList) {
-            int productIndex = productList.indexOf(purchase.getProduct());
-            quantitySold[productIndex]++;
-        }
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT Product.name, COUNT(*) AS quantity_sold FROM Purchase " +
+                            "INNER JOIN Product ON Purchase.product_id = Product.id " +
+                            "WHERE Purchase.purchase_date BETWEEN ? AND ? " +
+                            "GROUP BY Product.name ORDER BY quantity_sold DESC LIMIT 5");
+            preparedStatement.setObject(1, startDate);
+            preparedStatement.setObject(2, endDate);
+            ResultSet resultSet = preparedStatement.executeQuery();
 
-        for (int i = 0; i < productList.size() - 1; i++) {
-            for (int j = i + 1; j < productList.size(); j++) {
-                if (quantitySold[j] > quantitySold[i]) {
-                    int tempQuantity = quantitySold[i]; // меняем переменные местами
-                    quantitySold[i] = quantitySold[j];
-                    quantitySold[j] = tempQuantity;
+            int rank = 1;
+            System.out.println("Top Sold Items within the selected interval:");
+            while (resultSet.next()) {
+                String productName = resultSet.getString("name");
+                int quantitySold = resultSet.getInt("quantity_sold");
 
-                    String tempName = productNames[i];
-                    productNames[i] = productNames[j];
-                    productNames[j] = tempName;
-                }
+                System.out.println(rank + ". " + productName + " - Quantity Sold: " + quantitySold);
+                rank++;
             }
-        }
-
-        int topItemsCount = Math.min(5, productList.size());
-        for (int i = 0; i < topItemsCount; i++) {
-            System.out.println((i + 1) + ". " + productNames[i] + " - Quantity Sold: " + quantitySold[i]);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
